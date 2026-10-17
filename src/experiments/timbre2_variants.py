@@ -1,4 +1,4 @@
-"""三档高频方案对比，输出到 demo/timbre2/。
+"""三档高频方案对比，输出到 demo/02_高频配比/。
 
 背景：逐频带实测发现，我们与参考的差距**不在 1~3kHz，而在 4kHz 以上**
 （全线低 19~26dB）。所以这一轮改的是：
@@ -8,9 +8,9 @@
   * 提高噪声空气并降到 4kHz 高通（给「气息」）
 
 三档只在两个空气路径的配比上不同，其余完全一样：
-    V1_平衡   谐波 0.14 / 噪声 0.010
-    V2_谐波   谐波 0.22 / 噪声 0.006   更「金属光泽」
-    V3_气息   谐波 0.09 / 噪声 0.020   更「气声」
+    01_平衡   谐波 0.14 / 噪声 0.010
+    02_谐波   谐波 0.22 / 噪声 0.006   更「金属光泽」
+    03_气息   谐波 0.09 / 噪声 0.020   更「气声」
 """
 
 import os
@@ -25,13 +25,14 @@ import numpy as np
 import config as C
 import dsp
 import render
+from _demo import fresh, write
 
-OUT = os.path.join("demo", "timbre2")
+OUT = os.path.join("demo", "02_高频配比")
 
 VARIANTS = {
-    "V1_平衡": dict(harm=0.14, air=0.010),
-    "V2_谐波": dict(harm=0.22, air=0.006),
-    "V3_气息": dict(harm=0.09, air=0.020),
+    "01_平衡": dict(harm=0.14, air=0.010),
+    "02_谐波": dict(harm=0.22, air=0.006),
+    "03_气息": dict(harm=0.09, air=0.020),
 }
 
 # 每种方案各渲一遍元音与几个带辅音的音节
@@ -39,6 +40,7 @@ ITEMS = ["a", "i", "u", "e", "o", "ba", "da", "ga", "sa", "ta"]
 
 
 def main():
+    fresh(OUT)          # 先清空，免得上一轮的变体残留
     for name, p in VARIANTS.items():
         d = os.path.join(OUT, name)
         os.makedirs(d, exist_ok=True)
@@ -50,7 +52,7 @@ def main():
             else:
                 x, _ = render.render_cv(it[0], it[1], 262.0)
             x = dsp.normalize(x, dsp.rms(x), C.VOICED_RMS_DBFS, C.PEAK_CEILING)
-            dsp.write_wav(os.path.join(d, f"{it}.wav"), x)
+            write(os.path.join(d, f"{it}.wav"), x)
         print(f"{name}: {len(ITEMS)} 个样本")
     print(f"输出目录：{OUT}")
 

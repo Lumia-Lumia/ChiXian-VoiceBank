@@ -3,9 +3,9 @@
     python src/experiments/compare_sources.py
 
 输出：
-    demo/A_fmfb/   反馈 FM
-    demo/B_fm2/    两算子 FM
-    demo/C_fm2s/   两算子 FM + 包络平滑
+    demo/01_声源方案/A_fmfb/   反馈 FM
+    demo/01_声源方案/B_fm2/    两算子 FM
+    demo/01_声源方案/C_fm2s/   两算子 FM + 包络平滑
 
 每个目录里是同一组 a i u e o ba「a b」，可以直接 A/B 试听。
 客观指标在终端里一并打印（梳齿深度、频带能量比）。
@@ -25,6 +25,7 @@ import numpy as np
 import dsp
 import render
 from config import SR
+from _demo import fresh, write
 
 F0_C4 = 261.6256
 F0_AN = 100.0          # 分析用低音高：谱线间隔 100 Hz，足以分辨谐波
@@ -54,13 +55,7 @@ def analyze(method):
 
 
 def save(path, audio):
-    pcm = np.clip(audio, -1.0, 1.0)
-    pcm = (pcm * 32767.0).astype("<i2")
-    with wave.open(path, "wb") as w:
-        w.setnchannels(1)
-        w.setsampwidth(2)
-        w.setframerate(SR)
-        w.writeframes(pcm.tobytes())
+    write(path, audio)      # 补静音，与其它实验脚本一致
 
 
 def render_set(method, outdir):
@@ -73,6 +68,9 @@ def render_set(method, outdir):
         else:
             audio, _ = render.render_vc(arg[0], arg[1], F0_C4, method=method)
         save(os.path.join(outdir, f"{name}.wav"), audio)
+
+
+OUT = os.path.join("demo", "01_声源方案")
 
 
 def main():
@@ -88,10 +86,11 @@ def main():
     print("  若相差超过约 6 dB，试听时会更倾向于选亮的那个，而不是更好听的那个。")
 
     print("\n渲染对照样本")
+    fresh(OUT)          # 先清空，免得上一轮的变体残留
     for dirname, method, label in METHODS:
-        outdir = os.path.join("demo", dirname)
+        outdir = os.path.join(OUT, dirname)
         render_set(method, outdir)
-        print(f"  demo/{dirname}/  {label}  {len(SAMPLE_SET)} 个文件")
+        print(f"  demo/01_声源方案/{dirname}/  {label}  {len(SAMPLE_SET)} 个文件")
 
 
 if __name__ == "__main__":

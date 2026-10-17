@@ -6,7 +6,9 @@ __pycache__/
 out/
 
 # 试听样本：可随时用 src/experiments/ 重生成
-demo/
+# 用 demo/* 而不是 demo/，否则 git 不会进这个目录，下面的白名单也失效
+demo/*
+!demo/README.md
 
 # 参考资料：第三方音源与工程文件，体积大且受各自授权约束
 ref/banks/

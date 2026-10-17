@@ -258,6 +258,50 @@ def white(n, seed=0):
     return np.random.default_rng(seed).standard_normal(n)
 
 
+def tilted_noise(n, seed=0, slope_db_oct=-6.0, ref_hz=1000.0):
+    """带频谱倾斜的噪声。
+
+    白噪是等能量每赫兹、完全稳态的。真实的气流噪声（送气、摩擦）不是：
+    通过收缩处的湍流低频能量多、高频少，谱是往高频掉的；而且幅度随时间
+    起伏。白噪直接喂进声道滤波器，得到的是「嘶——」一条稳态噪声带，
+    听上去就是电子设备。
+
+    slope_db_oct : 每倍频程衰减多少 dB（负值 = 往高频掉）。0 就是白噪。
+    """
+    w = white(n, seed)
+    if slope_db_oct == 0.0 or n < 8:
+        return w
+    S = np.fft.rfft(w)
+    f = np.fft.rfftfreq(n, 1.0 / SR)
+    f[0] = f[1] if len(f) > 1 else 1.0
+    # 6.0206 dB = 一个倍频程 = 幅度因子 2
+    g = (f / ref_hz) ** (slope_db_oct / 6.0206)
+    out = np.fft.irfft(S * g, n)
+    r = out.std()
+    return out / r if r > 1e-12 else out
+
+
+def random_phase(x, seed=0):
+    """保留能量谱、随机化相位 —— 得到与输入同谱形的噪声。
+
+    气流噪声的谱由声门与声道决定，随机的是相位。所以与其拿白噪喂滤波器，
+    不如取声门源本身的谱（-6dB/oct 的倾斜 + 随音高变化的细节），
+    把相位打乱：这样得到的是「没有周期性的声门噪声」，而不是白噪。
+    """
+    n = len(x)
+    if n < 8:
+        return x.copy()
+    S = np.abs(np.fft.rfft(x))
+    rng = np.random.default_rng(seed)
+    ph = rng.uniform(0.0, 2.0 * np.pi, len(S))
+    ph[0] = 0.0
+    if n % 2 == 0:
+        ph[-1] = 0.0
+    out = np.fft.irfft(S * np.exp(1j * ph), n)
+    r = out.std()
+    return out / r if r > 1e-12 else out
+
+
 def bandpass(x, lo, hi, order=2, sr=SR):
     """巴特沃斯带通，用于擦音与爆破噪声的成形。"""
     lo = max(lo, 20.0)

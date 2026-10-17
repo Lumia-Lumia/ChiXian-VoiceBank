@@ -2,7 +2,7 @@
 
     python src/experiments/s_variants.py
 
-输出到 demo/s_variants/<方案名>/，每个方案 an sa si su 四个音节。
+输出到 demo/04_擦音s的谱形/<方案名>/，每个方案 an sa si su 四个音节。
 调音色只需改下面的 VARIANTS 表。
 """
 
@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import dsp
 import phonemes as ph
 import render
+from _demo import fresh, write
 
 F0 = 261.6256
 ITEMS = [("sa", "s", "a"), ("si", "s", "i"), ("su", "s", "u"), ("ha", "h", "a")]
@@ -26,12 +27,12 @@ BASE = dict(SIB_HP=ph.SIB_HP, SIB_PEAKS=ph.SIB_PEAKS, SIB_ROUGH=ph.SIB_ROUGH,
             GAIN=ph.GAIN_FRICATIVE_S, DUR=ph.CONSONANTS["s"]["frication"])
 
 VARIANTS = {
-    "V1_当前": {},
-    "V2_谱更低": dict(SIB_HP=2800.0,
+    "01_当前": {},
+    "02_谱更低": dict(SIB_HP=2800.0,
                       SIB_PEAKS=((4000, 1500), (5800, 1700), (7800, 2200))),
-    "V3_更长更平": dict(DUR=95, FRIC_ON_RAMP=20.0,
+    "03_更长更平": dict(DUR=95, FRIC_ON_RAMP=20.0,
                         SIB_PEAKS=((4300, 2200), (6600, 2600), (8600, 2600))),
-    "V4_更响": dict(GAIN=0.45),
+    "04_更响": dict(GAIN=0.45),
 }
 
 
@@ -48,16 +49,20 @@ def apply(over):
         ph.CONSONANTS[name]["frication"] = over.get("DUR", BASE["DUR"])
 
 
+OUT = os.path.join("demo", "04_擦音s的谱形")
+
+
 def main():
+    fresh(OUT)          # 先清空，免得上一轮的变体残留
     for label, over in VARIANTS.items():
         apply(over)
-        outdir = os.path.join("demo", "s_variants", label)
+        outdir = os.path.join(OUT, label)
         os.makedirs(outdir, exist_ok=True)
         for name, c, v in ITEMS:
             audio, _ = render.render_cv(c, v, F0)
-            dsp.write_wav(os.path.join(outdir, f"{name}.wav"), audio)
+            write(os.path.join(outdir, f"{name}.wav"), audio)
         pe = ph.CONSONANTS["s"]["frication"]
-        print(f"  demo/s_variants/{label}/  "
+        print(f"  demo/04_擦音s的谱形/{label}/  "
               f"高通{ph.SIB_HP:.0f}Hz  峰{tuple(int(x[0]) for x in ph.SIB_PEAKS)}  "
               f"擦音{pe}ms  增益{ph.GAIN_FRICATIVE_S}")
     apply({})   # 复原
