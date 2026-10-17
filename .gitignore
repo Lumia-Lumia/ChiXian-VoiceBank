@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 产物：可随时用 src/build.py 重生成，不入库
+out/
+
+# 试听样本：可随时用 src/experiments/ 重生成
+demo/
+
+# 参考资料：第三方音源与工程文件，体积大且受各自授权约束
+ref/banks/
+ref/reclists/
+ref/phonemizers/
+ref/ust/
+
+# ref/NOTES.md 是调研笔记，要入库
+!ref/NOTES.md
